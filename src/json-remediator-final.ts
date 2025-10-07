@@ -88,12 +88,12 @@ export class JsonRemediatorFinal {
 
     // Pattern 1: Fix missing commas between property values and next properties
     // Matches: "key": "value" "nextKey" -> "key": "value", "nextKey"
-    // Look for two quoted strings next to each other where the first is a value
-    fixed = fixed.replace(/(")\s*(")/g, (match, p1, p2) => {
-      // Check if this is a property value followed by a property key
-      // by looking for a colon before the first quote
-      const beforeMatch = fixed.substring(0, fixed.indexOf(match));
-      if (beforeMatch.includes(":")) {
+    // Use a more specific pattern that looks for property value followed by property key
+    // The pattern should match a property value (quoted string after colon) followed by whitespace and another quoted string
+    fixed = fixed.replace(/(":\s*"[^"]*")\s*(")/g, (match, p1, p2) => {
+      // Only add comma if the second quote is followed by a colon (indicating it's a property key)
+      const afterMatch = fixed.substring(fixed.indexOf(match) + match.length);
+      if (afterMatch.includes(":")) {
         this.errors.push({
           type: "missing-comma",
           line: 0,

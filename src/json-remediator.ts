@@ -166,24 +166,27 @@ export class JsonRemediator {
         const nextLine = i + 1 < lines.length ? lines[i + 1] : "";
         const nextLineTrimmed = nextLine.trim();
 
-        // Check if next line starts with a property (quoted key with colon) or opening brace/bracket
-        // BUT NOT if it starts with closing brace/bracket (that would be trailing comma)
-        if (
-          (nextLineTrimmed.startsWith('"') && nextLineTrimmed.includes(":")) ||
-          nextLineTrimmed.startsWith("{") ||
-          nextLineTrimmed.startsWith("[")
-        ) {
-          // Add comma to the end of the line, preserving indentation
-          const trimmed = line.trim();
-          const indent = line.substring(0, line.length - trimmed.length);
-          line = indent + trimmed + ",";
-          this.errors.push({
-            type: "missing-comma",
-            line: lineNumber,
-            column: line.length,
-            description: "Missing comma after property value",
-            fix: "Added comma after property value",
-          });
+        // Only add comma if next line is a sibling property (same indentation level)
+        // and starts with a quoted key followed by colon
+        if (nextLineTrimmed.startsWith('"') && nextLineTrimmed.includes(":")) {
+          // Check if it's actually a sibling by comparing indentation
+          const currentIndent = line.match(/^\s*/)?.[0] || "";
+          const nextIndent = nextLine.match(/^\s*/)?.[0] || "";
+
+          // Only add comma if next line has same indentation (sibling level)
+          if (nextIndent.length === currentIndent.length) {
+            // Add comma to the end of the line, preserving indentation
+            const trimmed = line.trim();
+            const indent = line.substring(0, line.length - trimmed.length);
+            line = indent + trimmed + ",";
+            this.errors.push({
+              type: "missing-comma",
+              line: lineNumber,
+              column: line.length,
+              description: "Missing comma after property value",
+              fix: "Added comma after property value",
+            });
+          }
         }
       }
 
