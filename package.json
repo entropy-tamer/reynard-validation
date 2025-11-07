@@ -1,6 +1,6 @@
 {
   "name": "reynard-validation",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "description": "Data validation and schema management",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -41,7 +41,7 @@
     "json:fix-all": "tsx src/cli/json-fixer.ts --all --fix"
   },
   "dependencies": {
-    "solid-js": "1.9.9"
+    "solid-js": "1.9.10"
   },
   "devDependencies": {
     "@solidjs/testing-library": "0.8.10",
@@ -57,7 +57,7 @@
     "vitest": "3.2.4"
   },
   "peerDependencies": {
-    "solid-js": "1.9.9"
+    "solid-js": "1.9.10"
   },
   "license": "MIT",
   "keywords": [
