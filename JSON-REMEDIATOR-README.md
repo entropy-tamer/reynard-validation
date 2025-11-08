@@ -179,7 +179,7 @@ node fix-all-package-jsons.js
 
 #### `remediate(jsonString: string): JsonRemediationResult`
 
-Fixes common JSON syntax errors in a string.
+Fixes common JSON syntax errors in a string using a multi-pass iterative approach.
 
 **Parameters:**
 
@@ -187,43 +187,95 @@ Fixes common JSON syntax errors in a string.
 
 **Returns:**
 
-- `success`: Whether the remediation was successful
+- `success`: Whether the remediation was successful (JSON can be parsed after fixing)
 - `fixedJson`: The fixed JSON string (if successful)
-- `errors`: Array of errors that were fixed
-- `unfixableErrors`: Array of errors that couldn't be fixed
+- `errors`: Array of `JsonSyntaxError` objects describing errors that were fixed
+- `unfixableErrors`: Array of error message strings for errors that couldn't be fixed
+
+**Example:**
+
+```typescript
+const result = remediator.remediate('{"name": "test" "version": "1.0.0"}');
+if (result.success) {
+  console.log(result.fixedJson); // '{"name": "test", "version": "1.0.0"}'
+  console.log(result.errors.length); // 1
+}
+```
 
 #### `remediatePackageJson(packageJsonContent: string): JsonRemediationResult`
 
-Fixes JSON syntax errors specifically in package.json files, with additional validation.
+Fixes JSON syntax errors specifically in package.json files, with additional package.json-specific validation.
 
 **Parameters:**
 
-- `packageJsonContent`: The package.json content to fix
+- `packageJsonContent`: The package.json content string to fix
 
-**Returns:** Same as `remediate()`, but with package.json specific validations.
+**Returns:** Same structure as `remediate()`, but includes additional validation for:
+
+- Required `name` field
+- Required `version` field
+- Semantic versioning format validation
+
+**Example:**
+
+```typescript
+const result = remediator.remediatePackageJson(malformedPackageJson);
+if (result.success && result.unfixableErrors.length === 0) {
+  console.log("Package.json is valid and fixed!");
+} else if (result.unfixableErrors.length > 0) {
+  console.log("Unfixable errors:", result.unfixableErrors);
+  // Example: ["Missing required field: name", "Invalid version format. Expected semantic version (e.g., 1.0.0)"]
+}
+```
 
 ### Utility Functions
 
 #### `fixJsonSyntax(jsonString: string): string`
 
-Quick utility function to fix JSON syntax errors.
+Quick utility function to fix JSON syntax errors without needing to create a remediator instance. Returns the fixed JSON string, or the original string if already valid or unfixable.
+
+**Example:**
+
+```typescript
+import { fixJsonSyntax } from "reynard-validation";
+
+const fixed = fixJsonSyntax('{"name": "test" "version": "1.0.0"}');
+console.log(fixed); // '{"name": "test", "version": "1.0.0"}'
+```
 
 #### `fixPackageJson(packageJsonContent: string): string`
 
-Quick utility function to fix package.json files specifically.
+Quick utility function to fix package.json files specifically. Returns the fixed package.json content, or the original if already valid or unfixable.
+
+**Example:**
+
+```typescript
+import { fixPackageJson } from "reynard-validation";
+
+const fixed = fixPackageJson('{"name": "my-package" "version": "1.0.0"}');
+console.log(fixed); // '{"name": "my-package", "version": "1.0.0"}'
+```
+
+**Note**: For detailed error information, use the `JsonRemediator` or `JsonRemediatorFinal` classes directly.
 
 ## Error Types
 
 The remediator can detect and fix the following error types:
 
-- `missing-comma`: Missing comma after property value
+- `missing-comma`: Missing comma after property value or array element
 - `trailing-comma`: Trailing comma before closing brace/bracket
 - `missing-quote`: Missing quotes around property name
-- `invalid-escape`: Invalid escape sequence
-- `malformed-object`: Missing closing brace
-- `malformed-array`: Missing closing bracket
-- `missing-field`: Missing required package.json field
-- `invalid-version`: Invalid version format
+- `invalid-escape`: Invalid escape sequence in strings
+- `malformed-object`: Missing closing brace `}`
+- `malformed-array`: Missing closing bracket `]`
+
+### Package.json Specific Errors
+
+When using `remediatePackageJson()`, additional validation errors may be reported in `unfixableErrors`:
+
+- Missing required `name` field
+- Missing required `version` field
+- Invalid version format (must be semantic versioning like `1.0.0`)
 
 ## Integration with Reynard
 
@@ -302,5 +354,3 @@ pnpm test
 Part of the Reynard framework, licensed under MIT.
 
 ---
-
-_Created by Cunning-Prime-7, your strategic fox specialist_ 🦊

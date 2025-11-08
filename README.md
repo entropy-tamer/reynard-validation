@@ -4,17 +4,20 @@ Validation utilities for the Reynard framework.
 
 ## Overview
 
-The `reynard-validation` package provides a comprehensive, unified validation system for the entire Reynard ecosystem.
+The `reynard-validation` package provides a comprehensive, unified validation system for the entire Reynard ecosystem. It consolidates all validation logic from across the ecosystem into a single, consistent, and powerful validation system with full TypeScript support, comprehensive error handling, and advanced features like JSON remediation.
 
 ## Features
 
 - **Unified API**: Single validation system across all Reynard packages
 - **Type Safety**: Full TypeScript support with comprehensive type definitions
 - **Extensible**: Easy to add custom validators and schemas
-- **Performance**: Optimized validation engine with minimal overhead
+- **Performance**: Optimized validation engine with minimal overhead (O(1) for basic validations, O(n) for complex schemas)
 - **Security**: Built-in security validation for URLs, passwords, and file uploads
 - **Flexible**: Support for both simple and complex validation scenarios
 - **JSON Remediation**: Advanced JSON syntax fixing and package.json validation
+- **Comprehensive Validators**: 20+ built-in validators for common use cases
+- **Schema System**: Flexible validation schemas with custom rules and error messages
+- **Error Handling**: Detailed validation errors with context information
 
 ## Installation
 
@@ -73,11 +76,11 @@ const formData = {
   password: "SecurePass123!",
 };
 
-const result = ValidationUtils.validateMultiple(formData, FormSchemas.registration);
+const result = ValidationUtils.validateFields(formData, FormSchemas.registration);
 
 console.log(result.isValid); // true
-console.log(result.validFields); // ["email", "username", "password"]
-console.log(result.invalidFields); // []
+console.log(result.results); // { email: {...}, username: {...}, password: {...} }
+console.log(result.errors); // [] (empty if all valid)
 ```
 
 ## JSON Remediation
@@ -178,11 +181,13 @@ The main validation engine class.
 class ValidationUtils {
   static validateValue(value: unknown, schema: ValidationSchema, options?: FieldValidationOptions): ValidationResult;
 
-  static validateMultiple(
+  static validateFields(
     data: Record<string, unknown>,
     schemas: Record<string, ValidationSchema>,
-    options?: FieldValidationOptions
-  ): ValidationResult;
+    options?: { strict?: boolean }
+  ): MultiValidationResult;
+
+  static validateOrThrow(value: unknown, schema: ValidationSchema, options?: FieldValidationOptions): void;
 }
 ```
 
@@ -193,11 +198,18 @@ The production-ready JSON remediation class for fixing JSON syntax errors.
 ```typescript
 class JsonRemediatorFinal {
   remediate(jsonString: string): JsonRemediationResult;
-  remediatePackageJson(jsonString: string): JsonRemediationResult;
-  private fixMissingCommas(json: string): string;
-  private fixTrailingCommas(json: string): string;
-  private fixMissingQuotes(json: string): string;
-  private fixMalformedStructures(json: string): string;
+  remediatePackageJson(packageJsonContent: string): JsonRemediationResult;
+}
+```
+
+#### `JsonRemediator`
+
+The comprehensive JSON remediation class with detailed error tracking.
+
+```typescript
+class JsonRemediator {
+  remediate(jsonString: string): JsonRemediationResult;
+  remediatePackageJson(packageJsonContent: string): JsonRemediationResult;
 }
 ```
 
@@ -247,12 +259,23 @@ type JsonRemediationResult = {
 
 ```typescript
 type JsonSyntaxError = {
-  type: "missing-comma" | "trailing-comma" | "missing-quote" | "malformed-structure" | "invalid-package-json";
-  message: string;
+  type: "missing-comma" | "trailing-comma" | "missing-quote" | "invalid-escape" | "malformed-object" | "malformed-array";
   line: number;
   column: number;
-  originalText: string;
-  fixedText: string;
+  description: string;
+  fix: string;
+};
+```
+
+#### `MultiValidationResult`
+
+Result of validating multiple fields with individual and aggregate results.
+
+```typescript
+type MultiValidationResult = {
+  isValid: boolean;
+  results: Record<string, ValidationResult>;
+  errors: string[];
 };
 ```
 
@@ -318,6 +341,8 @@ validateMimeType(mimeType: string, fieldName?: string): ValidationResult
 validateFileSize(fileSize: number, fieldName?: string, maxSize?: number): ValidationResult
 ```
 
+**Note**: `validateFileSize` accepts file size in bytes, with a default maximum of 100MB.
+
 #### AI/ML Validators
 
 ```typescript
@@ -325,6 +350,22 @@ validateModelName(modelName: string, fieldName?: string): ValidationResult
 validatePrompt(prompt: string, fieldName?: string): ValidationResult
 validateTemperature(temperature: number, fieldName?: string): ValidationResult
 validateMaxTokens(maxTokens: number, fieldName?: string): ValidationResult
+```
+
+#### UI/UX Validators
+
+```typescript
+validateTheme(theme: string, fieldName?: string): ValidationResult
+validateLanguage(language: string, fieldName?: string): ValidationResult
+validateColor(color: string, fieldName?: string): ValidationResult
+```
+
+#### Utility Validators
+
+```typescript
+validateNotEmpty(value: unknown, fieldName?: string): ValidationResult
+validatePositive(value: number, fieldName?: string): ValidationResult
+validateRange(value: number, min: number, max: number, fieldName?: string): ValidationResult
 ```
 
 #### Advanced Validators
@@ -498,6 +539,15 @@ When adding new validators:
 ## Additional Documentation
 
 - **[JSON Remediation Guide](./JSON-REMEDIATION-GUIDE.md)**: Comprehensive guide to JSON syntax fixing and package.json validation
+- **[JSON Remediator README](./JSON-REMEDIATOR-README.md)**: Detailed documentation for the JSON remediation system
+
+## Version
+
+Current version: **1.0.0**
+
+## Support
+
+For issues, questions, or contributions, please visit the [Reynard repository](https://github.com/reynard/reynard).
 
 ## License
 

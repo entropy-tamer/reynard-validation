@@ -1,9 +1,32 @@
 #!/usr/bin/env node
 
 /**
- * @fileoverview JSON Fixer CLI - Command line tool for fixing JSON syntax errors
- * @author Reynard Validation Package
+ * JSON Fixer CLI - Command-line tool for fixing JSON syntax errors.
+ *
+ * This module provides a comprehensive command-line interface for fixing JSON
+ * syntax errors in files. It supports single file fixing, batch processing of
+ * package.json files, and various output modes including check-only and verbose modes.
+ *
+ * Features:
+ * - Fix single JSON files or all package.json files in a directory
+ * - Check-only mode for validation without modification
+ * - Verbose output with detailed error information
+ * - In-place fixing or output to different file
+ *
+ * @example
+ * ```bash
+ * # Check a file
+ * json-fixer --check package.json
+ *
+ * # Fix a file in place
+ * json-fixer --fix package.json
+ *
+ * # Fix all package.json files
+ * json-fixer --all --fix
+ * ```
+ *
  * @since 0.2.0
+ * @author Reynard Validation Package
  */
 
 import { readFileSync, writeFileSync, existsSync } from "fs";
@@ -11,7 +34,12 @@ import { resolve, extname } from "path";
 import { JsonRemediator } from "../json-remediator.js";
 
 /**
- * CLI options interface
+ * Command-line interface options for the JSON fixer.
+ *
+ * This interface defines all available CLI options for configuring the JSON
+ * fixer behavior, including input/output files, operation modes, and verbosity.
+ *
+ * @since 0.2.0
  */
 interface CliOptions {
   /** Input file path */
@@ -29,7 +57,12 @@ interface CliOptions {
 }
 
 /**
- * JSON Fixer CLI class
+ * JSON Fixer CLI class for command-line JSON remediation operations.
+ *
+ * This class provides the main CLI functionality for fixing JSON syntax errors,
+ * including argument parsing, file processing, and result reporting.
+ *
+ * @since 0.2.0
  */
 class JsonFixerCli {
   private remediator: JsonRemediator;
@@ -39,7 +72,15 @@ class JsonFixerCli {
   }
 
   /**
-   * Main CLI entry point
+   * Main CLI entry point that processes command-line arguments and executes fixes.
+   *
+   * This method parses command-line arguments, determines the operation mode
+   * (single file or batch), and executes the appropriate fix operation.
+   *
+   * @param args - Command-line arguments array (typically process.argv.slice(2))
+   * @returns Promise that resolves when the operation completes
+   *
+   * @since 0.2.0
    */
   public async run(args: string[]): Promise<void> {
     const options = this.parseArgs(args);
@@ -52,7 +93,16 @@ class JsonFixerCli {
   }
 
   /**
-   * Parse command line arguments
+   * Parses command-line arguments and returns a CliOptions object.
+   *
+   * This method processes command-line arguments and extracts options including
+   * input/output files, operation modes, and verbosity settings.
+   *
+   * @param args - Command-line arguments array
+   * @returns CliOptions object with parsed configuration
+   *
+   * @private
+   * @since 0.2.0
    */
   private parseArgs(args: string[]): CliOptions {
     const options: CliOptions = {
@@ -114,7 +164,16 @@ class JsonFixerCli {
   }
 
   /**
-   * Fix a single file
+   * Fixes a single JSON file according to the provided options.
+   *
+   * This method processes a single file, applies JSON remediation if needed,
+   * and either checks or fixes the file based on the options provided.
+   *
+   * @param options - CLI options including input file and operation mode
+   * @returns Promise that resolves when the file is processed
+   *
+   * @private
+   * @since 0.2.0
    */
   private async fixSingleFile(options: CliOptions): Promise<void> {
     const inputPath = resolve(options.input);
@@ -175,7 +234,16 @@ class JsonFixerCli {
   }
 
   /**
-   * Fix all package.json files in the current directory and subdirectories
+   * Fixes all package.json files in the current directory and subdirectories.
+   *
+   * This method finds all package.json files (excluding node_modules and third_party),
+   * processes each one, and provides a summary of fixes applied.
+   *
+   * @param options - CLI options including fix mode and verbosity
+   * @returns Promise that resolves when all files are processed
+   *
+   * @private
+   * @since 0.2.0
    */
   private async fixAllPackageJsonFiles(options: CliOptions): Promise<void> {
     const { execSync } = await import("child_process");
@@ -242,7 +310,16 @@ class JsonFixerCli {
   }
 
   /**
-   * Print verbose output
+   * Prints verbose output with detailed error information.
+   *
+   * This method displays comprehensive information about the remediation process,
+   * including all errors found and fixed, and any unfixable errors.
+   *
+   * @param result - Remediation result object with error details
+   * @param filePath - Path to the file being processed
+   *
+   * @private
+   * @since 0.2.0
    */
   private printVerboseOutput(result: any, filePath: string): void {
     console.log(`\n📄 Processing: ${filePath}`);
@@ -267,7 +344,13 @@ class JsonFixerCli {
   }
 
   /**
-   * Show help message
+   * Displays the help message with usage instructions and available options.
+   *
+   * This method prints comprehensive help information including command syntax,
+   * available options, examples, and common fixes performed.
+   *
+   * @private
+   * @since 0.2.0
    */
   private showHelp(): void {
     console.log(`

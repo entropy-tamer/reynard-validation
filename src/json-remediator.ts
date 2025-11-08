@@ -1,11 +1,56 @@
 /**
- * @fileoverview JSON Syntax Remediator - Fixes common JSON syntax errors
- * @author Reynard Validation Package
+ * JSON Syntax Remediator - Comprehensive JSON syntax error detection and correction.
+ *
+ * This module provides a robust JSON remediation system that automatically detects
+ * and fixes common JSON syntax errors. It's designed to handle malformed JSON
+ * files that would otherwise fail to parse, making it particularly useful for
+ * fixing corrupted configuration files, package.json files, and other JSON data.
+ *
+ * The remediator handles:
+ * - Missing commas after property values
+ * - Trailing commas in objects and arrays
+ * - Missing quotes around property names
+ * - Invalid escape sequences
+ * - Malformed objects and arrays
+ * - Missing closing braces and brackets
+ *
+ * @example
+ * ```typescript
+ * import { JsonRemediator } from './json-remediator.js';
+ *
+ * const remediator = new JsonRemediator();
+ * const result = remediator.remediate('{"name": "test" "version": "1.0.0"}');
+ *
+ * if (result.success) {
+ *   console.log('Fixed JSON:', result.fixedJson);
+ *   console.log('Fixed errors:', result.errors.length);
+ * }
+ * ```
+ *
  * @since 0.2.0
+ * @author Reynard Validation Package
  */
 
 /**
- * Common JSON syntax errors and their fixes
+ * Represents a JSON syntax error with detailed information about the error
+ * location, type, and suggested fix.
+ *
+ * This interface provides comprehensive information about each JSON syntax error
+ * detected during remediation, including the exact location (line and column)
+ * and a description of what was fixed.
+ *
+ * @example
+ * ```typescript
+ * const error: JsonSyntaxError = {
+ *   type: 'missing-comma',
+ *   line: 5,
+ *   column: 20,
+ *   description: 'Missing comma after property value',
+ *   fix: 'Added comma after property value'
+ * };
+ * ```
+ *
+ * @since 0.2.0
  */
 export interface JsonSyntaxError {
   /** The type of error found */
@@ -27,7 +72,27 @@ export interface JsonSyntaxError {
 }
 
 /**
- * Result of JSON remediation attempt
+ * Result of a JSON remediation operation containing success status,
+ * fixed JSON content, and detailed error information.
+ *
+ * This interface provides comprehensive information about the remediation
+ * process, including whether the remediation was successful, the fixed JSON
+ * string (if successful), all errors that were detected and fixed, and any
+ * unfixable errors that remain.
+ *
+ * @example
+ * ```typescript
+ * const result: JsonRemediationResult = {
+ *   success: true,
+ *   fixedJson: '{"name": "test", "version": "1.0.0"}',
+ *   errors: [
+ *     { type: 'missing-comma', line: 1, column: 20, description: '...', fix: '...' }
+ *   ],
+ *   unfixableErrors: []
+ * };
+ * ```
+ *
+ * @since 0.2.0
  */
 export interface JsonRemediationResult {
   /** Whether the remediation was successful */
@@ -41,24 +106,82 @@ export interface JsonRemediationResult {
 }
 
 /**
- * JSON Syntax Remediator class
+ * JSON Syntax Remediator class for automatic detection and correction of JSON syntax errors.
  *
- * Fixes common JSON syntax errors including:
+ * This class provides comprehensive JSON remediation capabilities, automatically
+ * detecting and fixing common JSON syntax errors that prevent valid parsing.
+ * It uses a multi-pass approach to fix errors iteratively until the JSON is
+ * valid or no more fixes can be applied.
+ *
+ * The remediator handles:
  * - Missing commas after property values
  * - Trailing commas in objects and arrays
  * - Missing quotes around property names
  * - Invalid escape sequences
  * - Malformed objects and arrays
+ * - Missing closing braces and brackets
+ *
+ * @example
+ * ```typescript
+ * import { JsonRemediator } from './json-remediator.js';
+ *
+ * const remediator = new JsonRemediator();
+ *
+ * // Fix general JSON
+ * const result = remediator.remediate('{"name": "test" "version": "1.0.0"}');
+ * if (result.success) {
+ *   console.log('Fixed:', result.fixedJson);
+ * }
+ *
+ * // Fix package.json specifically
+ * const packageResult = remediator.remediatePackageJson(packageJsonContent);
+ * ```
+ *
+ * @since 0.2.0
+ *
+ * @remarks
+ * Performance characteristics:
+ * - Time complexity: O(n) where n is the JSON string length
+ * - Memory usage: O(n) for storing fixed JSON and error information
+ * - Uses iterative multi-pass approach for comprehensive error fixing
  */
 export class JsonRemediator {
   private errors: JsonSyntaxError[] = [];
   private unfixableErrors: string[] = [];
 
   /**
-   * Remediate JSON syntax errors in a string
+   * Remediates JSON syntax errors in a string and returns the fixed JSON.
+   *
+   * This method performs comprehensive JSON remediation, attempting to fix
+   * all detectable syntax errors. It first checks if the JSON is already valid,
+   * and if not, applies multiple fix passes until the JSON is valid or no
+   * more fixes can be applied.
    *
    * @param jsonString - The malformed JSON string to fix
-   * @returns Remediation result with fixed JSON and error details
+   * @returns JsonRemediationResult containing success status, fixed JSON,
+   *          list of errors fixed, and any unfixable errors
+   *
+   * @example
+   * ```typescript
+   * const remediator = new JsonRemediator();
+   * const result = remediator.remediate('{"name": "test" "version": "1.0.0"}');
+   *
+   * if (result.success) {
+   *   console.log('Fixed JSON:', result.fixedJson);
+   *   console.log('Fixed', result.errors.length, 'errors');
+   * } else {
+   *   console.log('Unfixable errors:', result.unfixableErrors);
+   * }
+   * ```
+   *
+   * @since 0.2.0
+   *
+   * @remarks
+   * The remediation process:
+   * 1. First attempts to parse the JSON as-is
+   * 2. If parsing fails, applies multiple fix passes
+   * 3. Validates the fixed JSON
+   * 4. Returns detailed results including all fixes applied
    */
   public remediate(jsonString: string): JsonRemediationResult {
     this.errors = [];
@@ -112,10 +235,25 @@ export class JsonRemediator {
   }
 
   /**
-   * Fix common JSON syntax errors
+   * Fixes common JSON syntax errors using a multi-pass iterative approach.
    *
-   * @param jsonString - The malformed JSON string
-   * @returns Fixed JSON string
+   * This private method applies multiple fix passes to the JSON string,
+   * fixing different types of errors in a specific order to ensure maximum
+   * compatibility. It runs up to 5 iterations or until no more changes are made.
+   *
+   * @param jsonString - The malformed JSON string to fix
+   * @returns Fixed JSON string with syntax errors corrected
+   *
+   * @private
+   * @since 0.2.0
+   *
+   * @remarks
+   * Fix order:
+   * 1. Missing quotes around property names
+   * 2. Missing commas after property values
+   * 3. Trailing commas before closing braces/brackets
+   * 4. Invalid escape sequences
+   * 5. Malformed objects and arrays
    */
   private fixJsonSyntax(jsonString: string): string {
     let fixed = jsonString;
@@ -148,10 +286,23 @@ export class JsonRemediator {
   }
 
   /**
-   * Fix missing commas after property values
+   * Fixes missing commas after property values and array elements.
+   *
+   * This method detects and fixes missing commas between JSON properties
+   * and array elements. It analyzes line structure and indentation to
+   * determine where commas should be added without breaking the JSON structure.
    *
    * @param jsonString - The JSON string to fix
-   * @returns Fixed JSON string
+   * @returns Fixed JSON string with missing commas added
+   *
+   * @private
+   * @since 0.2.0
+   *
+   * @remarks
+   * Handles:
+   * - Missing commas between object properties
+   * - Missing commas between array elements
+   * - Missing commas after nested objects/arrays
    */
   private fixMissingCommas(jsonString: string): string {
     const lines = jsonString.split("\n");
@@ -284,10 +435,23 @@ export class JsonRemediator {
   }
 
   /**
-   * Fix trailing commas in objects and arrays
+   * Fixes trailing commas before closing braces and brackets.
+   *
+   * This method removes trailing commas that appear before closing braces
+   * or brackets, which are invalid in strict JSON. It handles both single-line
+   * and multi-line trailing comma scenarios.
    *
    * @param jsonString - The JSON string to fix
-   * @returns Fixed JSON string
+   * @returns Fixed JSON string with trailing commas removed
+   *
+   * @private
+   * @since 0.2.0
+   *
+   * @remarks
+   * Handles:
+   * - Trailing commas on the same line as closing brace/bracket
+   * - Trailing commas on previous line before closing brace/bracket
+   * - Nested trailing commas in complex structures
    */
   private fixTrailingCommas(jsonString: string): string {
     const lines = jsonString.split("\n");
@@ -425,10 +589,23 @@ export class JsonRemediator {
   }
 
   /**
-   * Fix missing quotes around property names
+   * Fixes missing quotes around unquoted property names.
+   *
+   * This method detects property names that are not quoted and adds quotes
+   * around them. It uses regex to identify valid JavaScript identifier patterns
+   * that should be quoted in JSON.
    *
    * @param jsonString - The JSON string to fix
-   * @returns Fixed JSON string
+   * @returns Fixed JSON string with property names properly quoted
+   *
+   * @private
+   * @since 0.2.0
+   *
+   * @remarks
+   * Handles:
+   * - Unquoted property names (e.g., `name:` instead of `"name":`)
+   * - Preserves existing quoted property names
+   * - Maintains proper indentation
    */
   private fixMissingQuotes(jsonString: string): string {
     // Pattern: unquoted property name followed by colon
@@ -448,10 +625,23 @@ export class JsonRemediator {
   }
 
   /**
-   * Fix invalid escape sequences
+   * Fixes invalid escape sequences in JSON strings.
+   *
+   * This method detects and fixes invalid escape sequences that don't conform
+   * to JSON standards. It properly escapes backslashes and other special
+   * characters according to JSON specification.
    *
    * @param jsonString - The JSON string to fix
-   * @returns Fixed JSON string
+   * @returns Fixed JSON string with valid escape sequences
+   *
+   * @private
+   * @since 0.2.0
+   *
+   * @remarks
+   * Handles:
+   * - Unescaped backslashes
+   * - Invalid escape sequences
+   * - Preserves valid escape sequences
    */
   private fixInvalidEscapes(jsonString: string): string {
     // Fix common invalid escape sequences
@@ -468,10 +658,23 @@ export class JsonRemediator {
   }
 
   /**
-   * Fix malformed objects and arrays
+   * Fixes malformed objects and arrays by adding missing closing braces and brackets.
+   *
+   * This method counts opening and closing braces/brackets and adds any missing
+   * closing characters. It also handles undefined values that should be null
+   * in JSON.
    *
    * @param jsonString - The JSON string to fix
-   * @returns Fixed JSON string
+   * @returns Fixed JSON string with properly closed structures
+   *
+   * @private
+   * @since 0.2.0
+   *
+   * @remarks
+   * Handles:
+   * - Missing closing braces `}`
+   * - Missing closing brackets `]`
+   * - Replaces `undefined` with `null`
    */
   private fixMalformedStructures(jsonString: string): string {
     let fixed = jsonString;
@@ -514,10 +717,34 @@ export class JsonRemediator {
   }
 
   /**
-   * Validate and fix a package.json file specifically
+   * Validates and fixes a package.json file with additional package.json-specific checks.
    *
-   * @param packageJsonContent - The package.json content to fix
-   * @returns Remediation result with fixed package.json
+   * This method performs standard JSON remediation and then applies additional
+   * validation specific to package.json files, including checking for required
+   * fields (name, version) and validating version format.
+   *
+   * @param packageJsonContent - The package.json content string to fix
+   * @returns JsonRemediationResult with fixed package.json and validation results
+   *
+   * @example
+   * ```typescript
+   * const remediator = new JsonRemediator();
+   * const result = remediator.remediatePackageJson(packageJsonContent);
+   *
+   * if (result.success) {
+   *   console.log('Package.json fixed successfully');
+   * } else {
+   *   console.log('Unfixable errors:', result.unfixableErrors);
+   * }
+   * ```
+   *
+   * @since 0.2.0
+   *
+   * @remarks
+   * Additional validations:
+   * - Checks for required `name` field
+   * - Checks for required `version` field
+   * - Validates version format (semantic versioning)
    */
   public remediatePackageJson(packageJsonContent: string): JsonRemediationResult {
     const result = this.remediate(packageJsonContent);
@@ -550,10 +777,27 @@ export class JsonRemediator {
 }
 
 /**
- * Utility function to quickly fix JSON syntax errors
+ * Utility function to quickly fix JSON syntax errors without creating a remediator instance.
  *
- * @param jsonString - The malformed JSON string
- * @returns Fixed JSON string or original if no fixes needed
+ * This is a convenience function that creates a JsonRemediator instance, fixes
+ * the JSON, and returns the fixed string. Use this when you only need to fix
+ * JSON once and don't need detailed error information.
+ *
+ * @param jsonString - The malformed JSON string to fix
+ * @returns Fixed JSON string, or original string if already valid or unfixable
+ *
+ * @example
+ * ```typescript
+ * import { fixJsonSyntax } from './json-remediator.js';
+ *
+ * const fixed = fixJsonSyntax('{"name": "test" "version": "1.0.0"}');
+ * console.log(fixed); // {"name": "test", "version": "1.0.0"}
+ * ```
+ *
+ * @since 0.2.0
+ *
+ * @remarks
+ * For detailed error information, use JsonRemediator.remediate() instead.
  */
 export function fixJsonSyntax(jsonString: string): string {
   const remediator = new JsonRemediator();
@@ -562,10 +806,28 @@ export function fixJsonSyntax(jsonString: string): string {
 }
 
 /**
- * Utility function to fix package.json files specifically
+ * Utility function to quickly fix package.json files without creating a remediator instance.
  *
- * @param packageJsonContent - The package.json content
- * @returns Fixed package.json content
+ * This is a convenience function that creates a JsonRemediator instance, fixes
+ * the package.json with package-specific validations, and returns the fixed string.
+ * Use this when you only need to fix package.json once and don't need detailed
+ * error information.
+ *
+ * @param packageJsonContent - The package.json content string to fix
+ * @returns Fixed package.json content, or original if already valid or unfixable
+ *
+ * @example
+ * ```typescript
+ * import { fixPackageJson } from './json-remediator.js';
+ *
+ * const fixed = fixPackageJson('{"name": "my-package" "version": "1.0.0"}');
+ * console.log(fixed); // {"name": "my-package", "version": "1.0.0"}
+ * ```
+ *
+ * @since 0.2.0
+ *
+ * @remarks
+ * For detailed error information, use JsonRemediator.remediatePackageJson() instead.
  */
 export function fixPackageJson(packageJsonContent: string): string {
   const remediator = new JsonRemediator();

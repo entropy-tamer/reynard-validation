@@ -174,10 +174,9 @@ if (result.unfixableErrors.length > 0) {
 // Get detailed error information
 result.errors.forEach(error => {
   console.log(`Error Type: ${error.type}`);
-  console.log(`Message: ${error.message}`);
+  console.log(`Description: ${error.description}`);
   console.log(`Location: Line ${error.line}, Column ${error.column}`);
-  console.log(`Original: ${error.originalText}`);
-  console.log(`Fixed: ${error.fixedText}`);
+  console.log(`Fix Applied: ${error.fix}`);
 });
 ```
 
@@ -359,12 +358,24 @@ These errors require manual intervention:
 
 ```typescript
 type JsonSyntaxError = {
-  type: "missing-comma" | "trailing-comma" | "missing-quote" | "malformed-structure" | "invalid-package-json";
-  message: string;
+  type:
+    | "missing-comma"
+    | "trailing-comma"
+    | "missing-quote"
+    | "invalid-escape"
+    | "malformed-object"
+    | "malformed-array";
   line: number;
   column: number;
-  originalText: string;
-  fixedText: string;
+  description: string;
+  fix: string;
+};
+
+type JsonRemediationResult = {
+  success: boolean;
+  fixedJson?: string;
+  errors: JsonSyntaxError[];
+  unfixableErrors: string[];
 };
 ```
 
@@ -482,5 +493,3 @@ const fixed = this.fixNewErrorType(fixed);
 MIT License - see LICENSE file for details.
 
 ---
-
-🦊 _whiskers twitch with satisfaction_ The JSON remediation system is now fully integrated into the Reynard ecosystem, providing strategic JSON syntax fixing for all your development needs!

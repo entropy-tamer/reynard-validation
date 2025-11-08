@@ -114,6 +114,30 @@ export class StringValidators {
     }
   }
 
+  /**
+   * Validates a phone number format using a flexible regex pattern.
+   *
+   * This method checks if the provided string matches a valid phone number format.
+   * The pattern allows for international formats with optional country codes (+),
+   * spaces, hyphens, and parentheses for formatting.
+   *
+   * @param value - The value to validate (must be a string)
+   * @param fieldName - Name of the field for error messages
+   * @param errors - Array to collect validation errors
+   * @param schema - Validation schema (unused in this validator)
+   *
+   * @example
+   * ```typescript
+   * const errors: string[] = [];
+   * StringValidators.validatePhone('+1-555-123-4567', 'phone', errors, schema);
+   * // errors will be empty if valid
+   *
+   * StringValidators.validatePhone('123', 'phone', errors, schema);
+   * // errors will contain: ['phone must be a valid phone number']
+   * ```
+   *
+   * @since 1.0.0
+   */
   static validatePhone(value: unknown, fieldName: string, errors: string[], schema: ValidationSchema): void {
     if (typeof value !== "string") return;
 
@@ -145,6 +169,30 @@ export class StringValidators {
     }
   }
 
+  /**
+   * Validates a MIME type format according to RFC 2045 standards.
+   *
+   * This method checks if the provided string matches the standard MIME type
+   * format: `type/subtype` where both type and subtype contain only allowed
+   * characters (letters, numbers, and specific special characters).
+   *
+   * @param value - The value to validate (must be a string)
+   * @param fieldName - Name of the field for error messages
+   * @param errors - Array to collect validation errors
+   * @param schema - Validation schema (unused in this validator)
+   *
+   * @example
+   * ```typescript
+   * const errors: string[] = [];
+   * StringValidators.validateMimeType('application/json', 'mimeType', errors, schema);
+   * // errors will be empty if valid
+   *
+   * StringValidators.validateMimeType('invalid/mime', 'mimeType', errors, schema);
+   * // errors will contain: ['mimeType must be a valid MIME type']
+   * ```
+   *
+   * @since 1.0.0
+   */
   static validateMimeType(value: unknown, fieldName: string, errors: string[], schema: ValidationSchema): void {
     if (typeof value !== "string") return;
 
@@ -154,6 +202,34 @@ export class StringValidators {
     }
   }
 
+  /**
+   * Validates a color value in hex, RGB, or HSL format.
+   *
+   * This method checks if the provided string matches a valid color format:
+   * - Hex: `#RRGGBB` (6 hexadecimal digits)
+   * - RGB: `rgb(r, g, b)` (three comma-separated numbers)
+   * - HSL: `hsl(h, s%, l%)` (hue, saturation, and lightness percentages)
+   *
+   * @param value - The value to validate (must be a string)
+   * @param fieldName - Name of the field for error messages
+   * @param errors - Array to collect validation errors
+   * @param schema - Validation schema (unused in this validator)
+   *
+   * @example
+   * ```typescript
+   * const errors: string[] = [];
+   * StringValidators.validateColor('#FF5733', 'color', errors, schema);
+   * // errors will be empty if valid
+   *
+   * StringValidators.validateColor('rgb(255, 87, 51)', 'color', errors, schema);
+   * // errors will be empty if valid
+   *
+   * StringValidators.validateColor('red', 'color', errors, schema);
+   * // errors will contain: ['color must be a valid color']
+   * ```
+   *
+   * @since 1.0.0
+   */
   static validateColor(value: unknown, fieldName: string, errors: string[], schema: ValidationSchema): void {
     if (typeof value !== "string") return;
 
