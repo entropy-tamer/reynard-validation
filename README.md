@@ -259,7 +259,13 @@ type JsonRemediationResult = {
 
 ```typescript
 type JsonSyntaxError = {
-  type: "missing-comma" | "trailing-comma" | "missing-quote" | "invalid-escape" | "malformed-object" | "malformed-array";
+  type:
+    | "missing-comma"
+    | "trailing-comma"
+    | "missing-quote"
+    | "invalid-escape"
+    | "malformed-object"
+    | "malformed-array";
   line: number;
   column: number;
   description: string;
