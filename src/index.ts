@@ -259,6 +259,35 @@ export { JsonRemediatorFinal } from "./json-remediator-final.js";
 export type { JsonSyntaxError, JsonRemediationResult } from "./json-remediator.js";
 
 // ============================================================================
+// Security Validators Exports
+// ============================================================================
+
+/**
+ * Security validation utilities for detecting malicious patterns and attack vectors.
+ *
+ * Provides detection for the Contagious Interview campaign's use of base64-encoded
+ * JSON storage service URLs for malware delivery.
+ *
+ * @example
+ * ```typescript
+ * import { SecurityValidators } from 'reynard-validation';
+ *
+ * const errors: string[] = [];
+ * SecurityValidators.detectBase64JsonStorageUrl(
+ *   'aHR0cHM6Ly9qc29ua2VlcGVyLmNvbS9iL0dOT1g0',
+ *   'configUrl',
+ *   errors,
+ *   schema
+ * );
+ * ```
+ */
+export {
+  SecurityValidators,
+  KNOWN_MALICIOUS_URLS,
+  MALICIOUS_JSON_STORAGE_DOMAINS,
+} from "./validators/security-validators.js";
+
+// ============================================================================
 // Re-exports for backward compatibility
 // ============================================================================
 

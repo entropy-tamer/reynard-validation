@@ -46,6 +46,7 @@ import {
 import { StringValidators } from "./validators/string-validators.js";
 import { NumberValidators } from "./validators/number-validators.js";
 import { ArrayValidators } from "./validators/array-validators.js";
+import { SecurityValidators } from "./validators/security-validators.js";
 
 // ============================================================================
 // Core Validation Engine
@@ -139,6 +140,12 @@ export class ValidationUtils {
     // String validations
     if (typeof value === "string") {
       this.validateString(value, fieldName, errors, schema);
+      
+      // Security validation for base64-encoded JSON storage URLs
+      // This detects the Contagious Interview attack pattern
+      if (schema.securityCheck !== false) {
+        SecurityValidators.detectBase64JsonStorageUrl(value, fieldName, errors, schema);
+      }
     }
 
     // Number validations
@@ -559,5 +566,40 @@ export class ValidationUtils {
       };
       throw new ValidationError(errorMessage, context);
     }
+  }
+
+  /**
+   * Validates config file content for security threats.
+   *
+   * This method scans config file content for malicious patterns, including
+   * base64-encoded JSON storage URLs from the Contagious Interview campaign.
+   *
+   * @param content - Config file content to validate
+   * @param options - Validation options including strict mode
+   * @returns ValidationResult containing security threat detection results
+   *
+   * @example
+   * ```typescript
+   * const configContent = 'CONFIG_URL=aHR0cHM6Ly9qc29ua2VlcGVyLmNvbS9iL0dOT1g0\n';
+   * const result = ValidationUtils.validateConfigFileSecurity(configContent, { strict: true });
+   * if (!result.isValid) {
+   *   console.log('Security threats detected:', result.errors);
+   * }
+   * ```
+   *
+   * @since 1.0.0
+   */
+  static validateConfigFileSecurity(
+    content: string,
+    options: { strict?: boolean } = {}
+  ): ValidationResult {
+    const errors: string[] = [];
+    SecurityValidators.validateConfigFileSecurity(content, errors, options);
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+      error: errors.length > 0 ? errors[0] : undefined,
+    };
   }
 }

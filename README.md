@@ -13,6 +13,9 @@ The `reynard-validation` package provides a comprehensive, unified validation sy
 - **Extensible**: Easy to add custom validators and schemas
 - **Performance**: Optimized validation engine with minimal overhead (O(1) for basic validations, O(n) for complex schemas)
 - **Security**: Built-in security validation for URLs, passwords, and file uploads
+  - **Contagious Interview Attack Detection**: Automatically detects base64-encoded JSON storage URLs used for malware delivery
+  - **Config File Security Validation**: Scans config files for malicious patterns
+  - **Known IOC Detection**: Identifies known malicious indicators from threat intelligence
 - **Flexible**: Support for both simple and complex validation scenarios
 - **JSON Remediation**: Advanced JSON syntax fixing and package.json validation
 - **Comprehensive Validators**: 20+ built-in validators for common use cases
@@ -119,55 +122,13 @@ pnpm json:fix path/to/file.json
 pnpm json:fix-all
 ```
 
-### Supported Fixes
+**See [JSON Remediation Documentation](./docs/json-remediation.md)** for comprehensive documentation including:
 
-The JSON remediator can automatically fix:
-
-- **Missing Commas**: Adds missing commas between object properties and array elements
-- **Trailing Commas**: Removes trailing commas before closing brackets/braces
-- **Missing Quotes**: Adds quotes around unquoted property names
-- **Malformed Structures**: Fixes missing closing brackets and braces
-- **Package.json Validation**: Special validation for package.json files
-
-### Advanced Usage
-
-```typescript
-import { JsonRemediatorFinal } from "reynard-validation";
-
-const remediator = new JsonRemediatorFinal();
-
-// Fix package.json with special validation
-const packageJsonResult = remediator.remediatePackageJson(malformedPackageJson);
-
-// Check if there were unfixable errors
-if (packageJsonResult.unfixableErrors.length > 0) {
-  console.log("Unfixable errors:", packageJsonResult.unfixableErrors);
-}
-
-// Get detailed error information
-packageJsonResult.errors.forEach(error => {
-  console.log(`Error: ${error.type} at line ${error.line}, column ${error.column}`);
-  console.log(`Message: ${error.message}`);
-});
-```
-
-### Integration with Development Workflow
-
-The JSON remediation tool is integrated into the Reynard development workflow:
-
-- **Pre-commit Hook**: Automatically checks JSON files before commits
-- **CI/CD Pipeline**: Validates JSON syntax in continuous integration
-- **Development Scripts**: Easy access via `pnpm json:*` commands
-
-### Error Types
-
-The remediator detects and fixes these error types:
-
-- `missing-comma`: Missing comma between properties
-- `trailing-comma`: Trailing comma before closing bracket/brace
-- `missing-quote`: Unquoted property name
-- `malformed-structure`: Missing closing bracket/brace
-- `invalid-package-json`: Package.json specific validation errors
+- Complete API reference for `JsonRemediator` and `JsonRemediatorFinal` classes
+- Utility functions: `fixJsonSyntax`, `fixPackageJson`
+- All supported error types and fixes
+- CLI usage and integration examples
+- Error handling and troubleshooting
 
 ## API Reference
 
@@ -512,6 +473,34 @@ import { validatePassword, validateEmail } from "reynard-validation";
 - **File Validation**: Secure filename and MIME type validation
 - **Input Sanitization**: Built-in input sanitization for common attack vectors
 - **XSS Prevention**: Validates against common XSS patterns
+- **Contagious Interview Attack Detection**: Automatically detects base64-encoded JSON storage URLs used for malware delivery
+  - Detects malicious patterns in config files
+  - Identifies known IOCs from threat intelligence
+  - Validates against known malicious JSON storage services
+
+### Security Validators
+
+The validation package includes specialized security validators to detect the **Contagious Interview** campaign attack vector:
+
+```typescript
+import { SecurityValidators, ValidationUtils } from 'reynard-validation';
+
+// Automatic detection (enabled by default)
+const result = ValidationUtils.validateValue(
+  'aHR0cHM6Ly9qc29ua2VlcGVyLmNvbS9iL0dOT1g0',
+  { type: 'string' },
+  { fieldName: 'API_KEY' }
+);
+// Automatically detects base64-encoded JSON storage URL
+
+// Config file validation
+const configContent = 'API_KEY=aHR0cHM6Ly9qc29ua2VlcGVyLmNvbS9iL0dOT1g0\n';
+const securityCheck = ValidationUtils.validateConfigFileSecurity(configContent, {
+  strict: true  // Fail on any threat
+});
+```
+
+**See:** [Security Validators Documentation](./docs/security-validators.md)
 
 ## Testing
 
@@ -544,8 +533,50 @@ When adding new validators:
 
 ## Additional Documentation
 
-- **[JSON Remediation Guide](./JSON-REMEDIATION-GUIDE.md)**: Comprehensive guide to JSON syntax fixing and package.json validation
-- **[JSON Remediator README](./JSON-REMEDIATOR-README.md)**: Detailed documentation for the JSON remediation system
+Comprehensive documentation is available in the [`docs/`](./docs/) directory:
+
+### Core Documentation
+
+- **[Core Validation Engine](./docs/core-validation.md)**: The central `ValidationUtils` class and core validation methods
+  - `validateValue()` - Single value validation
+  - `validateFields()` - Multi-field validation
+  - `validateOrThrow()` - Exception-based validation
+  - `validateConfigFileSecurity()` - Security validation
+
+### Validation Tools
+
+- **[Utility Validators](./docs/utility-validators.md)**: Standalone validation functions for common use cases
+  - Basic, API, File, Configuration, AI/ML, UI/UX, and Advanced validators
+  - Complete API reference with examples for all 20+ validators
+
+- **[Validator Classes](./docs/validator-classes.md)**: Internal validator classes for specialized validation
+  - `StringValidators`, `NumberValidators`, `ArrayValidators`
+  - Direct usage examples and integration patterns
+
+### Schema System
+
+- **[Schema System](./docs/schema-system.md)**: Pre-built schemas and schema builders
+  - `CommonSchemas` - 20+ predefined field validation schemas
+  - `FormSchemas` - Complete form validation schemas
+  - Schema builders for creating custom validation schemas
+
+### Specialized Features
+
+- **[JSON Remediation](./docs/json-remediation.md)**: JSON syntax fixing and package.json validation
+  - `JsonRemediator` and `JsonRemediatorFinal` classes
+  - Utility functions: `fixJsonSyntax`, `fixPackageJson`
+  - CLI usage and integration examples
+  - Error types and handling
+
+- **[Security Validators](./docs/security-validators.md)**: Security validation for detecting malicious patterns
+  - Contagious Interview attack detection
+  - Base64-encoded JSON storage URL detection
+  - Config file security validation
+  - Known IOC detection
+
+### Documentation Index
+
+- **[Documentation Index](./docs/README.md)**: Complete documentation index and navigation guide
 
 ## Version
 

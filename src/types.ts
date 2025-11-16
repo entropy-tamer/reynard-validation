@@ -202,6 +202,8 @@ export type ValidationSchema = {
   unique?: boolean;
   /** Regular expression for validating array items */
   items?: RegExp;
+  /** Whether to perform security checks (defaults to true, set to false to disable) */
+  securityCheck?: boolean;
 };
 
 /**
